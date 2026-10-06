@@ -8,7 +8,7 @@ This is a portable Next.js dashboard, independent of ChatGPT sign-in. Airtable r
 2. In Vercel choose Add New → Project → import the repository. Framework: Next.js; root directory: the folder containing package.json. Use the build command already supplied (`npm run build`).
 3. Set the following environment variables for the deployment environment:
    - `DASHBOARD_USERNAME`: choose a username for the initial private dashboard.
-   - `DASHBOARD_PASSWORD`: generate a unique random password of at least 20 characters. Do not reuse your Airtable or Vercel password.
+   - `DASHBOARD_PASSWORD`: choose a password of at least 4 characters. Do not reuse your Airtable or Vercel password.
    - `AIRTABLE_READ_TOKEN`: an Airtable personal access token with **data.records:read** scope and access only to base **app72eKOnd9oaiCyR**. Create it at https://airtable.com/create/tokens. Write scope is unnecessary.
 4. Deploy. Open the returned HTTPS deployment URL. Your browser prompts for the dashboard username/password.
 5. Confirm Accounts loads, open an existing post, compare media ID and metrics with Airtable, and check Activity. Missing metrics remain unavailable, rather than becoming zero. If the base has no posts, the empty view is expected.
@@ -18,7 +18,7 @@ A personal demo can use Vercel Hobby under its non-commercial rules. MO4 busines
 
 ## Access and connections
 
-Initial access uses one shared HTTP Basic credential over HTTPS. Missing credentials or a password shorter than 20 characters blocks access. This is suitable for a restricted acceptance demo, not individual user management: add a managed identity provider with a verified MO4 allowlist before broader team rollout. Rotate the shared password by changing the hosting secret and redeploying; browsers may retain old credentials until closed. Vercel's deployment protection may add a separate host-level login.
+Initial access uses one shared HTTP Basic credential over HTTPS. Missing credentials or a password shorter than 4 characters blocks access. This is suitable for a restricted acceptance demo, not individual user management: add a managed identity provider with a verified MO4 allowlist before broader team rollout. Rotate the shared password by changing the hosting secret and redeploying; browsers may retain old credentials until closed. Vercel's deployment protection may add a separate host-level login.
 
 Airtable secrets are used only in the server route. Former ChatGPT identity headers have no effect. Data is never written to browser local storage. The app requires same-origin requests and does not expose a public Airtable proxy.
 
