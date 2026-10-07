@@ -32,6 +32,7 @@ export default function Workspace() {
   const [tab, setTab] = useState<'Library' | 'Approvals' | 'Calendar'>('Library');
   const [search, setSearch] = useState('');
   const [format, setFormat] = useState('all');
+  const [promotion, setPromotion] = useState('all');
   const [sortKey, setSortKey] = useState('date');
   const [sortDir, setSortDir] = useState<1 | -1>(-1);
   const [month, setMonth] = useState(new Date().toISOString().slice(0, 7));
@@ -123,7 +124,7 @@ export default function Workspace() {
     const a = document.createElement('a'); a.href = url; a.download = 'mo4-content-export.csv'; a.click(); URL.revokeObjectURL(url);
   }
 
-  const libraryRows = scoped.filter(p => (format === 'all' || p.fields['Media Format'] === format) && (!search || `${p.fields['Post Title']} ${p.fields.Caption}`.toLowerCase().includes(search.toLowerCase())));
+  const libraryRows = scoped.filter(p => (format === 'all' || p.fields['Media Format'] === format) && (promotion === 'all' || p.fields['Promotion Status'] === promotion) && (!search || `${p.fields['Post Title']} ${p.fields.Caption}`.toLowerCase().includes(search.toLowerCase())));
   const axis = { stroke: 'var(--muted)', fontSize: 11, tickLine: false, axisLine: false } as const;
 
   return (
@@ -218,7 +219,7 @@ export default function Workspace() {
 
           {page === 'Content' && <>
             <div className="toolbar"><div className="segmented big">{(['Library', 'Approvals', 'Calendar'] as const).map(t => <button key={t} className={tab === t ? 'on' : ''} onClick={() => setTab(t)}>{t}{t === 'Approvals' && approvals.length > 0 && <b>{approvals.length}</b>}</button>)}</div>
-              {tab === 'Library' && <div className="filters"><label className="search"><Search size={15} /><input aria-label="Search content" placeholder="Search content…" value={search} onChange={e => setSearch(e.target.value)} /></label><select aria-label="Format" value={format} onChange={e => setFormat(e.target.value)}><option value="all">All formats</option>{FORMATS.map(f => <option key={f}>{f}</option>)}</select></div>}
+              {tab === 'Library' && <div className="filters"><label className="search"><Search size={15} /><input aria-label="Search content" placeholder="Search content…" value={search} onChange={e => setSearch(e.target.value)} /></label><select aria-label="Format" value={format} onChange={e => setFormat(e.target.value)}><option value="all">All formats</option>{FORMATS.map(f => <option key={f}>{f}</option>)}</select><select aria-label="Promotion" value={promotion} onChange={e => setPromotion(e.target.value)}><option value="all">All promotion states</option>{['Unknown', 'Not promoted', 'Boosted', 'Ad-linked'].map(f => <option key={f}>{f}</option>)}</select></div>}
               <a className="button" href={base + '/tblSDEJXTXmMhiuxw'} target="_blank" rel="noreferrer">Manage in Airtable <ArrowUpRight size={14} /></a></div>
             {tab === 'Approvals' && <div className="notice info"><Lightbulb size={16} />Approvals are done in Airtable. Approve the exact account, caption, media and schedule there. Any change requires re-approval.</div>}
             {tab !== 'Calendar' && <section className="card">{postTable(tab === 'Library' ? libraryRows : approvals)}</section>}
@@ -234,7 +235,8 @@ export default function Workspace() {
             <section className="card account-card" key={a.id}>
               <div className="account-top"><span className="publication-mark">{text(a.fields.Publication).slice(0, 2).toUpperCase()}</span><Badge value={a.fields['Connection Status']} /></div>
               <h2>{a.fields.Publication}</h2><p>{a.fields['Instagram Username'] ? '@' + a.fields['Instagram Username'] : 'Instagram account not mapped'}</p>
-              <dl><dt>Publishing</dt><dd>{a.fields['Publishing Enabled'] ? 'Enabled' : 'Disabled'}</dd><dt>Insights</dt><dd>{a.fields['Insights Enabled'] ? 'Enabled' : 'Disabled'}</dd><dt>Timezone</dt><dd>{a.fields.Timezone || 'Not set'}</dd><dt>Last success</dt><dd>{fmtDate(a.fields['Last Successful Sync'])}</dd><dt>Last discovery</dt><dd>{fmtDate(a.fields['Last Discovery At'])}</dd><dt>Tracking from</dt><dd>{a.fields['Tracking Start'] ? String(a.fields['Tracking Start']).slice(0, 10) : 'Not set'}</dd></dl>
+              <dl><dt>Publishing</dt><dd>{a.fields['Publishing Enabled'] ? 'Enabled' : 'Disabled'}</dd><dt>Insights</dt><dd>{a.fields['Insights Enabled'] ? 'Enabled' : 'Disabled'}</dd><dt>Timezone</dt><dd>{a.fields.Timezone || 'Not set'}</dd><dt>Last success</dt><dd>{fmtDate(a.fields['Last Successful Sync'])}</dd><dt>Last discovery</dt><dd>{fmtDate(a.fields['Last Discovery At'])}</dd><dt>Consecutive failures</dt><dd>{a.fields['Consecutive Failures'] ?? 0}</dd><dt>Tracking from</dt><dd>{a.fields['Tracking Start'] ? String(a.fields['Tracking Start']).slice(0, 10) : 'Not set'}</dd></dl>
+              {a.fields['Last Error'] && <p className="acct-error">{text(a.fields['Last Error']).slice(0, 220)}</p>}
               <a className="text-button" href={base + '/tblInBXmP2Hj0At0B/' + a.id} target="_blank" rel="noreferrer">Review account <ArrowUpRight size={14} /></a>
             </section>))}</div>{!data.accounts.length && <section className="card"><Empty title="No accounts yet" body="Connect Airtable to review account mappings and collection health." /></section>}</>}
 
@@ -259,28 +261,32 @@ function PostModal({ post, history, account, onClose }: { post: Row; history: Ro
   const items: { k: string; label: string; color: string }[] = [
     ...METRICS.map(m => ({ k: m.key, label: m.label, color: m.color })),
     { k: 'IG Reposts', label: 'Reposts', color: '#8b5cf6' }, { k: 'IG Profile Visits', label: 'Profile visits', color: '#14b8a6' }, { k: 'IG Follows', label: 'Follows', color: '#ec4899' },
-    ...(f['Media Format'] === 'Reel' ? [{ k: 'Reel Avg Watch Time (ms)', label: 'Avg watch (ms)', color: '#ff4d8d' }, { k: 'Reel Skip Rate', label: 'Skip rate', color: '#f97316' }] : []),
-    ...(f['Media Format'] === 'Story' ? ['Story Replies', 'Story Link Clicks', 'Story Taps Forward', 'Story Taps Back', 'Story Exits'].map(k => ({ k, label: k.replace('Story ', ''), color: '#f5a524' })) : []),
+    { k: 'Combined Likes', label: 'Total likes*', color: '#ff4d8d' }, { k: 'Combined Comments', label: 'Total comments*', color: '#f5a524' }, { k: 'Combined Views', label: 'Total views*', color: '#06b6d4' },
+    ...(f['Media Format'] === 'Reel' ? [{ k: 'Reel Avg Watch Time (ms)', label: 'Avg watch (ms)', color: '#ff4d8d' }, { k: 'Reel Total Watch Time (ms)', label: 'Total watch (ms)', color: '#ff4d8d' }, { k: 'Reel Skip Rate', label: 'Skip rate', color: '#f97316' }] : []),
+    ...(f['Media Format'] === 'Story' ? ['Story Replies', 'Story Link Clicks', 'Story Taps Forward', 'Story Taps Back', 'Story Exits', 'Story Next Story'].map(k => ({ k, label: k.replace('Story ', ''), color: '#f5a524' })) : []),
   ].filter(i => typeof f[i.k] === 'number' || METRICS.some(m => m.key === i.k));
-  const points = history.map(h => ({ time: new Date(h.fields['Collected At']).getTime(), reach: h.fields['IG Reach'] ?? null, views: h.fields['IG Views'] ?? null, likes: h.fields['IG Likes'] ?? null })).filter(h => Number.isFinite(h.time)).sort((a, b) => a.time - b.time);
+  const points = history.map(h => ({ time: new Date(h.fields['Collected At']).getTime(), reach: h.fields['IG Reach'] ?? null, views: h.fields['IG Views'] ?? null, likes: h.fields['IG Likes'] ?? null, saves: h.fields['IG Saves'] ?? null, shares: h.fields['IG Shares'] ?? null })).filter(h => Number.isFinite(h.time)).sort((a, b) => a.time - b.time);
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <section className="modal" role="dialog" aria-modal="true" aria-label="Post details" onClick={e => e.stopPropagation()}>
         <button className="close" aria-label="Close post details" onClick={onClose}><X size={20} /></button>
         <div className="eyebrow">{(f['Media Format'] || 'POST').toString().toUpperCase()} · {account || 'Unassigned'}</div>
         <h2>{f['Post Title'] || 'Untitled post'}</h2>
-        <div className="modal-badges"><Badge value={f['Publishing Status']} /><Badge value={f['Insights Status']} />{f['Promotion Status'] && <Badge value={f['Promotion Status']} />}<span className="when">{fmtDate(postDate(post))}</span></div>
+        <div className="modal-badges">{f['Content Status'] && <Badge value={f['Content Status']} />}<Badge value={f['Publishing Status']} /><Badge value={f['Insights Status']} />{f['Promotion Status'] && <Badge value={f['Promotion Status']} />}<span className="when">{fmtDate(postDate(post))}</span></div>
         <p className="caption">{f.Caption || 'No caption stored.'}</p>
         <div className="detail-metrics">{items.map(i => <div key={i.k} style={{ ['--c' as any]: i.color }}><small>{i.label}</small><strong>{compact(num(f[i.k]))}</strong>{stale(i.k) && <em title="The latest request did not return this metric; this is the previous value.">last available</em>}</div>)}
           <div style={{ ['--c' as any]: ER_COLOR }}><small>Engagement</small><strong>{percent(engagement(post))}</strong></div></div>
+        {['Combined Likes', 'Combined Comments', 'Combined Views'].some(k => typeof f[k] === 'number') && <p className="fine">* Totals include promoted and cross-posted engagement; the other numbers are organic Instagram only.</p>}
         <h3>Performance history</h3>
         {points.length ? <div className="chart-box"><ResponsiveContainer width="100%" height="100%"><LineChart data={points} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
           <CartesianGrid stroke="var(--line)" strokeDasharray="3 6" vertical={false} /><XAxis dataKey="time" stroke="var(--muted)" fontSize={11} tickLine={false} axisLine={false} tickFormatter={v => new Date(v).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })} /><YAxis stroke="var(--muted)" fontSize={11} tickLine={false} axisLine={false} />
           <Tooltip contentStyle={tooltipStyle} labelFormatter={v => fmtDate(v)} />
-          <Line dataKey="reach" name="Reach" stroke="#7c5cff" strokeWidth={2.5} dot={false} connectNulls={false} /><Line dataKey="views" name="Views" stroke="#06b6d4" strokeWidth={2.5} dot={false} connectNulls={false} /><Line dataKey="likes" name="Likes" stroke="#ff4d8d" strokeWidth={2.5} dot={false} connectNulls={false} />
+          <Line dataKey="reach" name="Reach" stroke="#7c5cff" strokeWidth={2.5} dot={false} connectNulls={false} /><Line dataKey="views" name="Views" stroke="#06b6d4" strokeWidth={2.5} dot={false} connectNulls={false} /><Line dataKey="likes" name="Likes" stroke="#ff4d8d" strokeWidth={2.5} dot={false} connectNulls={false} /><Line dataKey="saves" name="Saves" stroke="#10b981" strokeWidth={2} dot={false} connectNulls={false} /><Line dataKey="shares" name="Shares" stroke="#3b82f6" strokeWidth={2} dot={false} connectNulls={false} />
         </LineChart></ResponsiveContainer></div> : <Empty title="History starts with the first observation" body="Snapshots appear once the insight collector has run for this post." />}
         <p className="fine">Numbers are cumulative. Blank means unavailable, not zero. Last collection: {fmtDate(f['Last Insights Success'])}.</p>
         <details><summary>Additional metrics</summary><pre>{f['Additional Insights'] || 'No additional metrics have been returned yet.'}</pre></details>
+        <details><summary>Promotion details</summary><pre>{[`Status: ${f['Promotion Status'] || 'Unknown'}`, f['Promotion Source'] && `Source: ${f['Promotion Source']}`, f['Promotion Last Verified'] && `Last verified: ${fmtDate(f['Promotion Last Verified'])}`, f['Promotion Metadata']].filter(Boolean).join('\n')}</pre></details>
+        <details><summary>Publishing details</summary><pre>{[['Content status', f['Content Status']], ['Approved by', f['Approved By']], ['Approved at', f['Approved At'] && fmtDate(f['Approved At'])], ['Scheduled at', f['Scheduled At'] && fmtDate(f['Scheduled At'])], ['Attempts', f['Attempt Count']], ['Next attempt', f['Next Publish Attempt'] && fmtDate(f['Next Publish Attempt'])], ['Last error', f['Last Error']]].filter(r => r[1] !== undefined && r[1] !== null && r[1] !== '').map(r => r[0] + ': ' + r[1]).join('\n') || 'No publishing activity recorded.'}</pre></details>
         <details><summary>Metric availability</summary><pre>{f['Metric Metadata'] || 'No collection metadata recorded yet.'}</pre></details>
         <div className="modal-links"><a className="button" href={base + '/tblSDEJXTXmMhiuxw/' + post.id} target="_blank" rel="noreferrer">Open record <ArrowUpRight size={14} /></a>{/^https:\/\/([\w-]+\.)?instagram\.com\//i.test(f['Instagram Permalink'] || '') && <a className="button dark" href={f['Instagram Permalink']} target="_blank" rel="noreferrer">View on Instagram <ArrowUpRight size={14} /></a>}</div>
       </section>

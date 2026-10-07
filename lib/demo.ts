@@ -33,7 +33,7 @@ export function demoData(now = Date.now()): Data {
       'Post Title': title, Caption: title + (r() > 0.5 ? ' — order now and tell us what you think. We are open every day until late with new offers every week.' : ''),
       'Media Format': format, Account: [i % 4 === 0 ? 'recDemoB' : 'recDemoA'], 'Published At': d.toISOString(), 'Publishing Status': 'Published', 'Insights Status': noData ? 'Unavailable' : 'Current',
       'Instagram Media ID': '1790' + (100000 + i), 'Instagram Permalink': 'https://www.instagram.com/p/demo' + i + '/', 'Last Insights Success': new Date(now - 6 * 3600000).toISOString(),
-      ...(noData ? {} : { 'IG Reach': reach, 'IG Views': Math.round(reach * (1.3 + r() * 0.8)), 'IG Likes': likes, 'IG Comments': comments, 'IG Saves': saves, 'IG Shares': shares, 'IG Reposts': Math.round(shares * 0.2), 'IG Profile Visits': Math.round(reach * 0.03), 'IG Follows': Math.round(reach * 0.004) }),
+      ...(noData ? {} : { 'IG Reach': reach, 'IG Views': Math.round(reach * (1.3 + r() * 0.8)), 'IG Likes': likes, 'IG Comments': comments, 'IG Saves': saves, 'IG Shares': shares, 'IG Reposts': Math.round(shares * 0.2), 'IG Profile Visits': Math.round(reach * 0.03), 'IG Follows': Math.round(reach * 0.004), 'Combined Likes': Math.round(likes * 1.2), 'Combined Comments': Math.round(comments * 1.1), 'Combined Views': Math.round(reach * 2.1) }),
     } });
     if (!noData) for (let k = 1; k <= 4; k++) history.push({ id: 'recDemoH' + i + '_' + k, fields: { Post: [id], 'Collected At': new Date(d.getTime() + k * k * 6 * 3600000).toISOString(), 'IG Reach': Math.round(reach * (1 - 0.7 / k)), 'IG Views': Math.round(reach * 1.6 * (1 - 0.7 / k)), 'IG Likes': Math.round(likes * (1 - 0.6 / k)) } });
   }
