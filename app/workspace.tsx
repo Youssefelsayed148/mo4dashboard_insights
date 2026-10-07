@@ -105,12 +105,12 @@ export default function Workspace() {
   function postTable(rows: Row[]) {
     if (!rows.length) return <Empty title={ready ? 'No matching content' : 'Your content will appear here'} body={ready ? 'Nothing matches the current filters.' : 'Waiting for the first read from Airtable.'} />;
     return (
-      <div className="table-wrap"><table><thead><tr>{th('title', 'Content')}<th>Account</th>{th('date', 'Published')}{th('IG Reach', 'Reach')}{th('IG Views', 'Views')}{th('IG Likes', 'Likes')}{th('IG Comments', 'Comments')}{th('IG Saves', 'Saves')}{th('er', 'Eng.')}<th>Status</th></tr></thead>
+      <div className="table-wrap"><table><thead><tr>{th('title', 'Content')}<th>Account</th>{th('date', rows.every(isPublished) ? 'Published' : rows.some(isPublished) ? 'Date' : 'Scheduled at')}{th('IG Reach', 'Reach')}{th('IG Views', 'Views')}{th('IG Likes', 'Likes')}{th('IG Comments', 'Comments')}{th('IG Saves', 'Saves')}{th('er', 'Eng.')}<th>Status</th></tr></thead>
         <tbody>{tableRows(rows).map(p => (
           <tr key={p.id}>
             <td><button className="post-title" onClick={() => setSelected(p)}>{p.fields['Post Title'] || 'Untitled post'}</button><small><i className="fmt-dot" style={{ background: FORMAT_COLORS[p.fields['Media Format']] || 'var(--muted)' }} />{p.fields['Media Format'] || 'Format not set'}</small></td>
             <td>{accountNames[p.fields.Account?.[0]] || '—'}</td>
-            <td>{fmtDate(postDate(p))}</td>
+            <td>{fmtDate(postDate(p))}{rows.some(isPublished) && !rows.every(isPublished) && <small>{isPublished(p) ? 'Published' : 'Scheduled'}</small>}</td>
             {['IG Reach', 'IG Views', 'IG Likes', 'IG Comments', 'IG Saves'].map(k => <td key={k} className="n">{compact(num(p.fields[k]))}</td>)}
             <td className="n">{percent(engagement(p))}</td>
             <td><Badge value={p.fields['Publishing Status'] === 'Published' ? p.fields['Insights Status'] || 'Published' : p.fields['Publishing Status']} /></td>
