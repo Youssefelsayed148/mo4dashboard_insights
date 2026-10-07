@@ -16,7 +16,7 @@ const TZ = 'Africa/Cairo';
 const DAY = 86400000;
 
 export const num = (v: any): number | undefined => (typeof v === 'number' && Number.isFinite(v) ? v : undefined);
-export const postDate = (p: Row): string | undefined => p.fields['Published At'] || p.fields['Scheduled At'];
+export const postDate = (p: Row): string | undefined => isPublished(p) ? (p.fields['Published At'] || p.fields['Scheduled At']) : (p.fields['Scheduled At'] || p.fields['Published At']);
 export const isPublished = (p: Row) => p.fields['Publishing Status'] === 'Published';
 export const hasContent = (p: Row) => !!(p.fields['Post Title'] || p.fields['Instagram Media ID']);
 
